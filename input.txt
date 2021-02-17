@@ -1,7 +1,9 @@
 # ignore
 # TODO : end of line
-         zig zag chains
-         check that all probs = 1
+#        zig zag chains
+#        ellipsoidal shapes
+#        random translation
+#        random rotation
 # Boolean accepted values: true, True, 1, yes, Yes
 #                          false, False, 0, no, No
 director = z # As of current version, only director = z is supported

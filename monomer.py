@@ -23,6 +23,9 @@ class polymer():
         for i in self.monomers:
             i.translate(coords)
 
+    def get_length(self):
+        return sum([i.length for i in self.monomers])
+
 class monomer_settings():
     def __init__(self, monomer_id):
         self.id = monomer_id
@@ -96,16 +99,10 @@ class monomer():
 
     def create_atom_list(self):
         self.atoms = []
+        position = 0
         for i, atom_type in enumerate(self.composition):
-            self.atoms.append( atom(i, atom_type, [0,0,0], self.settings.length[atom_type]) )
-
-        for i in self.atoms[1::]:
-            if self.director == "x":
-                i.translate([ self.atoms[i.id-1].length, 0, 0 ])
-            elif self.director == "y":
-                i.translate([ 0, self.atoms[i.id-1].length, 0 ])
-            elif self.director == "z":
-                i.translate([ 0, 0, self.atoms[i.id-1].length ])
+            self.atoms.append( atom(i, atom_type, [0,0,position], self.settings.length[atom_type]) )
+            position += self.settings.length[atom_type]
 
     def evaluate_length(self):
         if self.settings.length == "auto":
@@ -132,7 +129,7 @@ class monomer():
 class atom():
     def __init__(self, monomer_id, atom_type, xyz, length):
         self.monomer_id = monomer_id
-        self.atom_type = atom_type
+        self.type = atom_type
         self.x = xyz[0]
         self.y = xyz[1]
         self.z = xyz[2]
@@ -160,3 +157,6 @@ class atom():
         elif director == "z":
             self.x = radius * cos(angle*DEG_TO_RAD)
             self.y = radius * cos(angle*DEG_TO_RAD)
+
+    def add_system_id(self, system_id):
+        self.system_id = system_id

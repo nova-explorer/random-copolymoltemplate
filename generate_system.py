@@ -1,5 +1,6 @@
 from monomer import monomer, polymer
 from numpy.random import choice
+from random import uniform
 
 class system():
     def __init__(self, settings):
@@ -7,6 +8,9 @@ class system():
         self.evaluate_settings()
         self.initialize_monomers()
         self.create_system()
+        self.evaluate_bounds()
+        self.initialize_system_id()
+        self.random_translation()
 
     def evaluate_settings(self):
         """[summary]
@@ -109,6 +113,38 @@ class system():
             row_position += self.settings.spacing
         self.polymers = row_list
 
+    def evaluate_bounds(self):
+        if self.settings.boundaries == "auto":
+            min_ = 0
+            max_ = 0
+            length_dir_1 = self.settings.spacing * self.settings.nb_chains_1
+            length_dir_2 = self.settings.spacing * self.settings.nb_chains_2
+            for row in system.polymers:
+                for poly in row:
+                    current_length = poly.get_length()
+                    if current_length > max_:
+                        max_ = current_length
+            self.settings.boundaries = [[0, length_dir_1],
+                                        [0, length_dir_2],
+                                        [0, max_]]
+
+    def update_system_ids(self):
+        cnt = 1
+        for row in self.polymers:
+            for poly in row:
+                for mono in poly.monomers:
+                    for atom in mono.atoms:
+                        atom.add_system_id(cnt)
+                        cnt += 1
+
+    def random_translation(self):
+        if self.settings.translate:
+            for row in self.polymers:
+                for poly in row:
+                    amplitude = uniform(self.settings.trans_amp[0],
+                                        self.settings.trans_amp[1])
+                    poly.translate([0,0,amplitude])
+
     def define_directions(self):
         direction_1 = ""
         direction_2 = ""
@@ -205,7 +241,6 @@ class system():
             flag = False
         return flag
 
-    def to_dict(self, value):
         value_dict = {}
         for i in value.split(":"):
             value_dict[i[0]] = float(i[1])
