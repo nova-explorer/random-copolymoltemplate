@@ -26,7 +26,7 @@ class system():
             ValueError: [description]
             ValueError: [description]
             ValueError: [description]
-        TODO: boundaries and lengths should have a common is_nested_list() flag.
+        TODO: boundaries and sizes should have a common is_nested_list() flag.
         """
         if self.settings.director not in ["x", "y", "z"]:
             raise ValueError("Director not valid. Can be x, y or z.")
@@ -78,18 +78,25 @@ class system():
         else:
             raise ValueError("boundaries is not auto or a nested list of floats")
 
-        if self.is_length(self.settings.lengths):
-            self.settings.lengths = self.to_dict(self.settings.lengths)
+        if self.is_dict_of_float(self.settings.sizes):
+            self.settings.sizes = self.to_dict_of_float(self.settings.sizes)
         else:
-            raise ValueError("lengths are not dictionnary")
+            raise ValueError("sizes are not dictionnary")
+
+        if self.is_dict_of_float(self.settings.angles):
+            self.settings.angles = self.to_dict_of_float(self.settings.angles)
+        else:
+            raise ValueError("angles are not dictionnary")
+
 
         for i in self.settings.monomers:
-            i.add_particle_lengths(self.settings.lengths)
+            i.add_particle_sizes(self.settings.sizes)
+            i.add_particle_angles(self.settings.angles)
 
     def initialize_monomers(self):
         self.monomers = []
         for i in self.settings.monomers:
-            self.monomers.append(monomer(i, self.settings.director))
+            self.monomers.append(monomer(i, self.settings.director, 1))
         self.probabilities = [i.probability for i in self.monomers]
         if sum(self.probabilities) != 1:
             raise ValueError("Sum of probabilities is not equal to 1")
@@ -136,18 +143,6 @@ class system():
                     for atom in mono.atoms:
                         atom.add_system_id(cnt)
                         cnt += 1
-        # cnt = 1
-        # for row in range(len(self.polymers)):
-        #     curr_row = self.polymers[row]
-        #     for poly in range(len(curr_row)):
-        #         curr_poly = curr_row[poly]
-        #         for mono in range(len(curr_poly.monomers)):
-        #             curr_mono = curr_poly.monomers[mono]
-        #             for atom in range(len(curr_mono.atoms)):
-        #                 current_atom = curr_mono.atoms[atom]
-        #                 current_atom.add_system_id(cnt)
-        #                 self.polymers[row][poly].monomers[mono].atoms[atom] = current_atom
-        #                 cnt += 1
 
     def random_translation(self):
         if self.settings.translate:
@@ -245,7 +240,7 @@ class system():
         value = [[float(j.strip()) for j in i.strip().split(",")] for i in value.split(":")]
         return value
 
-    def is_length(self, value):
+    def is_dict_of_float(self, value):
         value = [[j.strip() for j in i.strip().split(",")] for i in value.split(":")]
         if len(value) == 3 and sum([len(i)==2 for i in value]) and [self.is_float(i[1]) for i in value]:
             flag = True
@@ -253,7 +248,7 @@ class system():
             flag = False
         return flag
 
-    def to_dict(self, value):
+    def to_dict_of_float(self, value):
         value_dict = {}
         for i in value.split(":"):
             i = [j.strip() for j in i.split(",")]

@@ -13,12 +13,14 @@ class polymer():
     def create_polymer(self):
         self.monomers = []
         position = 0
+        inversion_counter = 1
         for i in range(self.nb_monomer):
             current_monomer = choice(self.monomer_list, replace=False, p=self.probabilities)
-            current_monomer = monomer(current_monomer.settings, current_monomer.director)
+            current_monomer = monomer(current_monomer.settings, current_monomer.director, inversion_counter)
             current_monomer.translate([0, 0, position])
             self.monomers.append(current_monomer)
             position += current_monomer.length
+            inversion_counter = inversion_counter * current_monomer.get_inversion_counter()
 
     def translate(self, coords):
         for i in self.monomers:
@@ -69,15 +71,18 @@ class monomer_settings():
     def add_probability(self, probability):
         self.probability = probability
 
-    def add_particle_lengths(self, lengths):
-        self.particles_lengths = lengths
+    def add_particle_sizes(self, sizes):
+        self.particles_sizes = sizes
+
+    def add_particle_angles(self, angles):
+        self.particles_angles = angles
 
 class monomer():
-    def __init__(self, settings, director):
+    def __init__(self, settings, director, inversion_counter):
         self.settings = settings
         self.director = director
         self.evaluate_composition()
-        self.create_atom_list()
+        self.create_atom_list(inversion_counter)
         self.evaluate_length()
         self.evaluate_probability()
         self.create_lammps_ids()
@@ -97,23 +102,40 @@ class monomer():
                     raise ValueError("repeat value is not an int")
             self.composition.extend([unit]*repeat)
 
-        types = self.settings.particles_lengths.keys()
+        types = self.settings.particles_sizes.keys()
         for i in self.composition:
             if i not in types:
                 raise Exception("Type", i, "does not have a specified length")
 
-    def create_atom_list(self):
+    def create_atom_list(self, inversion_counter):
+        DEG_TO_RAD = 2 * pi / 360
         self.atoms = []
-        last_length = self.settings.particles_lengths[self.composition[0]]
+        last_length = self.settings.particles_sizes[self.composition[0]]*sin(self.settings.particles_angles[self.composition[0]]*DEG_TO_RAD/2)
         position = -last_length
         for i, atom_type in enumerate(self.composition):
-            position += (self.settings.particles_lengths[atom_type] + last_length)/2
-            self.atoms.append( atom(i, atom_type, [0,0,position], self.settings.particles_lengths[atom_type]) )
-            last_length = self.settings.particles_lengths[atom_type]
+            if self.settings.particles_angles[atom_type]:
+                position += (self.settings.particles_sizes[atom_type]*sin(self.settings.particles_angles[atom_type]*DEG_TO_RAD/2) + last_length)/2
+                direction_1 = ( self.settings.particles_sizes[atom_type]*cos(self.settings.particles_angles[atom_type]*DEG_TO_RAD/2) ) / 2 * inversion_counter
+                self.atoms.append( atom(i, atom_type, [direction_1,0,position], self.settings.particles_sizes[atom_type]) )
+                last_length = self.settings.particles_sizes[atom_type]*sin(self.settings.particles_angles[atom_type]*DEG_TO_RAD/2)
+                inversion_counter *= -1
+            else:
+                position += (self.settings.particles_sizes[atom_type] + last_length)/2
+                self.atoms.append( atom(i, atom_type, [0,0,position], self.settings.particles_sizes[atom_type]) )
+                last_length = self.settings.particles_sizes[atom_type]
+        self.last_length = last_length
+
+    def get_inversion_counter(self):
+        if len(self.composition) % 2: # if even number of atoms
+            inv_cnt = -1
+        else:
+            inv_cnt = 1
+        return inv_cnt
 
     def evaluate_length(self):
         if self.settings.length == "auto":
-            self.length = sum([i.length for i in self.atoms])
+            # self.length = sum([i.size for i in self.atoms])
+            self.length = self.atoms[-1].z - self.atoms[0].z + self.last_length
         else:
             try:
                 self.length = float(self.settings.length)
@@ -135,18 +157,18 @@ class monomer():
 
     def create_lammps_ids(self):
         for i in self.atoms:
-            i.add_lammps_type(self.settings.particles_lengths.keys())
+            i.add_lammps_type(self.settings.particles_sizes.keys())
 
     def add_system_id(self, system_id):
         self.s_id = system_id
 class atom():
-    def __init__(self, monomer_id, atom_type, xyz, length):
+    def __init__(self, monomer_id, atom_type, xyz, size):
         self.monomer_id = monomer_id
         self.type = atom_type
         self.x = xyz[0]
         self.y = xyz[1]
         self.z = xyz[2]
-        self.length = length
+        self.size = size
 
     def translate(self, coords):
         self.x += coords[0]

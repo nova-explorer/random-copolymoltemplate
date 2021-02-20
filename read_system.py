@@ -87,8 +87,10 @@ class system_settings():
                 self.rot_amp = p
             elif s == "boundaries":
                 self.boundaries = p
-            elif s == "lengths":
-                self.lengths = p
+            elif s == "sizes":
+                self.sizes = p
+            elif s == "angles":
+                self.angles = p
             elif s.startswith("monomer"):
                 self.add_monomer_property(s,p)
             else:

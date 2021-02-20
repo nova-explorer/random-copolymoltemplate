@@ -1,14 +1,13 @@
 # ignore
 # TODO : end of line
-#        zig zag chains
 #        ellipsoidal shapes
 #        random rotation
 # Boolean accepted values: true, True, 1, yes, Yes
 #                          false, False, 0, no, No
 director = z # As of current version, only director = z is supported
-nb_chains_1 = 1
-nb_chains_2 = 1
-nb_monomers_per_chain = 2
+nb_chains_1 = 10
+nb_chains_2 = 10
+nb_monomers_per_chain = 8
 
 monomer1_composition = CH2[10] + ELL + CH2[10]
 monomer2_composition = CH2[10] + BNZ + CH2[10]
@@ -21,7 +20,7 @@ monomer2_probability = 0.5
 
 spacing_between_chains = 10
 
-translate_on_director = no
+translate_on_director = yes
 translation_amplitude = -50,50
 
 rotate_along_director = true
@@ -30,4 +29,5 @@ rotation_amplitude = -180,180
 boundaries = auto
 # boundaries = 0,100 : 0,100 : 0,100
 
-lengths = CH2,1.54 : ELL,17.50 : BNZ,3.66
+sizes = CH2,1.54 : ELL,17.50 : BNZ,3.66
+angles = CH2,109.4 : ELL,180 : BNZ,180
