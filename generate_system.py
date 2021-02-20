@@ -9,7 +9,7 @@ class system():
         self.initialize_monomers()
         self.create_system()
         self.evaluate_bounds()
-        self.initialize_system_id()
+        self.update_system_ids()
         self.random_translation()
 
     def evaluate_settings(self):
@@ -102,7 +102,7 @@ class system():
             column_list = [] # along direction_2 (y)
             column_position = 0
             for column in range(self.settings.nb_chains_2):
-
+                current_polymer = None
                 current_polymer = polymer(self.monomers, self.probabilities, self.settings.nb_monomers, self.settings.director)
                 current_polymer.translate([row_position, column_position, 0])
 
@@ -119,7 +119,7 @@ class system():
             max_ = 0
             length_dir_1 = self.settings.spacing * self.settings.nb_chains_1
             length_dir_2 = self.settings.spacing * self.settings.nb_chains_2
-            for row in system.polymers:
+            for row in self.polymers:
                 for poly in row:
                     current_length = poly.get_length()
                     if current_length > max_:
@@ -136,6 +136,18 @@ class system():
                     for atom in mono.atoms:
                         atom.add_system_id(cnt)
                         cnt += 1
+        # cnt = 1
+        # for row in range(len(self.polymers)):
+        #     curr_row = self.polymers[row]
+        #     for poly in range(len(curr_row)):
+        #         curr_poly = curr_row[poly]
+        #         for mono in range(len(curr_poly.monomers)):
+        #             curr_mono = curr_poly.monomers[mono]
+        #             for atom in range(len(curr_mono.atoms)):
+        #                 current_atom = curr_mono.atoms[atom]
+        #                 current_atom.add_system_id(cnt)
+        #                 self.polymers[row][poly].monomers[mono].atoms[atom] = current_atom
+        #                 cnt += 1
 
     def random_translation(self):
         if self.settings.translate:
@@ -201,14 +213,14 @@ class system():
 
     def is_min_max(self, value):
         value = [i.strip() for i in value.split(",")]
-        if len(value) == 2 and sum([False for i in value if not self.is_float(i)]) == len(value):
+        if len(value) == 2 and sum([True for i in value if self.is_float(i)]) == len(value):
             flag = True
         else:
             flag = False
         return flag
 
     def to_min_max(self, value):
-        value = [float(i.strip() for i in value.split(","))]
+        value = [float(i.strip()) for i in value.split(",")]
         value.sort()
         return value
 
@@ -241,7 +253,9 @@ class system():
             flag = False
         return flag
 
+    def to_dict(self, value):
         value_dict = {}
         for i in value.split(":"):
+            i = [j.strip() for j in i.split(",")]
             value_dict[i[0]] = float(i[1])
         return value_dict

@@ -15,7 +15,8 @@ class polymer():
         position = 0
         for i in range(self.nb_monomer):
             current_monomer = choice(self.monomer_list, replace=False, p=self.probabilities)
-            current_monomer.translate(0, 0, position)
+            current_monomer = monomer(current_monomer.settings, current_monomer.director)
+            current_monomer.translate([0, 0, position])
             self.monomers.append(current_monomer)
             position += current_monomer.length
 
@@ -25,6 +26,9 @@ class polymer():
 
     def get_length(self):
         return sum([i.length for i in self.monomers])
+
+    def add_system_id(self, system_id):
+        self.s_id = system_id
 
 class monomer_settings():
     def __init__(self, monomer_id):
@@ -76,6 +80,7 @@ class monomer():
         self.create_atom_list()
         self.evaluate_length()
         self.evaluate_probability()
+        self.create_lammps_ids()
 
     def evaluate_composition(self):
         composition = [i.strip() for i in self.settings.composition.split("+")]
@@ -99,10 +104,12 @@ class monomer():
 
     def create_atom_list(self):
         self.atoms = []
-        position = 0
+        last_length = self.settings.particles_lengths[self.composition[0]]
+        position = -last_length
         for i, atom_type in enumerate(self.composition):
-            self.atoms.append( atom(i, atom_type, [0,0,position], self.settings.length[atom_type]) )
-            position += self.settings.length[atom_type]
+            position += (self.settings.particles_lengths[atom_type] + last_length)/2
+            self.atoms.append( atom(i, atom_type, [0,0,position], self.settings.particles_lengths[atom_type]) )
+            last_length = self.settings.particles_lengths[atom_type]
 
     def evaluate_length(self):
         if self.settings.length == "auto":
@@ -118,7 +125,7 @@ class monomer():
             prob = float(self.settings.probability)
             if prob > 1:
                 raise ValueError("Value too high")
-            self.prob = prob
+            self.probability = prob
         except:
             print("probability is not a number")
 
@@ -126,6 +133,12 @@ class monomer():
         for i in self.atoms:
             i.translate(coords)
 
+    def create_lammps_ids(self):
+        for i in self.atoms:
+            i.add_lammps_type(self.settings.particles_lengths.keys())
+
+    def add_system_id(self, system_id):
+        self.s_id = system_id
 class atom():
     def __init__(self, monomer_id, atom_type, xyz, length):
         self.monomer_id = monomer_id
@@ -160,3 +173,8 @@ class atom():
 
     def add_system_id(self, system_id):
         self.system_id = system_id
+
+    def add_lammps_type(self, particles_type):
+        for i,typing in enumerate(particles_type):
+            if self.type == typing:
+                self.lammps_type = i+1
