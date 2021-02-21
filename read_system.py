@@ -69,7 +69,11 @@ class system_settings():
 
             if s == "director":
                 self.director = p
-            elif s == "nb_chains_1": # Check if int
+            elif s == "direction_1":
+                self.direction_1 = p
+            elif s == "direction_2":
+                self.direction_2 = p
+            elif s == "nb_chains_1":
                 self.nb_chains_1 = p
             elif s == "nb_chains_2":
                 self.nb_chains_2 = p

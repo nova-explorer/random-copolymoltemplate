@@ -28,9 +28,7 @@ class system():
             ValueError: [description]
         TODO: boundaries and sizes should have a common is_nested_list() flag.
         """
-        if self.settings.director not in ["x", "y", "z"]:
-            raise ValueError("Director not valid. Can be x, y or z.")
-        self.define_directions()
+        self.check_directions(self.settings.director, self.settings.direction_1, self.settings.direction_2)
 
         if self.is_posint(self.settings.nb_chains_1):
             self.settings.nb_chains_1 = int(self.settings.nb_chains_1)
@@ -88,41 +86,31 @@ class system():
         else:
             raise ValueError("angles are not dictionnary")
 
-
-        for i in self.settings.monomers:
-            i.add_particle_sizes(self.settings.sizes)
-            i.add_particle_angles(self.settings.angles)
-
     def initialize_monomers(self):
         self.monomers = []
         for i in self.settings.monomers:
-            self.monomers.append(monomer(i, self.settings.director, 1))
+            self.monomers.append(monomer(i, self.settings, inv_cnt=1))
         self.probabilities = [i.probability for i in self.monomers]
         if sum(self.probabilities) != 1:
             raise ValueError("Sum of probabilities is not equal to 1")
 
     def create_system(self):
-        row_list = [] # along direction_1 (x)
-        row_position = 0
-        for row in range(self.settings.nb_chains_1):
-
-            column_list = [] # along direction_2 (y)
-            column_position = 0
-            for column in range(self.settings.nb_chains_2):
-                current_polymer = None
+        position = {'x':0, 'y':0, 'z':0}
+        row_list = [] # along direction_1
+        for _ in range(self.settings.nb_chains_1):
+            column_list = [] # along direction_2
+            position[self.settings.direction_2] = 0
+            for _ in range(self.settings.nb_chains_2):
                 current_polymer = polymer(self.monomers, self.probabilities, self.settings.nb_monomers, self.settings.director)
-                current_polymer.translate([row_position, column_position, 0])
-
+                current_polymer.translate(position)
                 column_list.append(current_polymer)
-                column_position += self.settings.spacing
-
+                position[self.settings.direction_2] += self.settings.spacing
             row_list.append(column_list)
-            row_position += self.settings.spacing
+            position[self.settings.direction_1] += self.settings.spacing
         self.polymers = row_list
 
     def evaluate_bounds(self):
         if self.settings.boundaries == "auto":
-            min_ = 0
             max_ = 0
             length_dir_1 = self.settings.spacing * self.settings.nb_chains_1
             length_dir_2 = self.settings.spacing * self.settings.nb_chains_2
@@ -145,31 +133,29 @@ class system():
                         cnt += 1
 
     def random_translation(self):
+        position = {'x':0, 'y':0, 'z':0}
         if self.settings.translate:
             for row in self.polymers:
                 for poly in row:
                     amplitude = uniform(self.settings.trans_amp[0],
                                         self.settings.trans_amp[1])
-                    poly.translate([0,0,amplitude])
+                    position[self.settings.director] = amplitude
+                    poly.translate(position)
 
-    def define_directions(self):
-        direction_1 = ""
-        direction_2 = ""
+    def check_directions(self, d0, d1, d2):
+        coords = ["x","y","z"]
+        if d0 not in coords:
+            raise Exception("director not x, y or z")
 
-        if self.settings.director == "x":
-            direction_1 = "y"
-            direction_2 = "z"
-        elif self.settings.director == "y":
-            direction_1 = "x"
-            direction_2 = "z"
-        elif self.settings.director == "z":
-            direction_1 = "x"
-            direction_2 = "y"
-        else:
-            raise Exception("Impossible Error. Director not x, y or z")
+        if d1 not in coords:
+            raise Exception("direction_1 not x, y or z")
+        elif d1 == d0:
+            raise Exception("direction_1 needs to be different from director")
 
-        self.settings.direction_1 = direction_1
-        self.settings.direction_2 = direction_2
+        if d2 not in coords:
+            raise Exception("direction_2 not x, y or z")
+        elif d2 == d0 or d2 == d1:
+            raise Exception("direction_2 needs to be different from director or direction_1")
 
     def is_posint(self, value):
         try:
