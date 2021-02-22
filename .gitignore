@@ -131,3 +131,9 @@ dmypy.json
 # Custom
 # Lammps ouput file
 *.dump
+# Local file for testing stuff
+test.py
+# vscode directory
+.vscode/
+# Local commit log
+.commit

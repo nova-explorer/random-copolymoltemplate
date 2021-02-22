@@ -25,9 +25,9 @@ def print_nb_atoms(system):
 
 def print_bounds(system):
     bounds = ""
-    line = "{min} {max}\n"
+    line = "0 {max}\n"
     for i in system.settings.boundaries:
-        bounds += line.format(min=i[0], max=i[1])
+        bounds += line.format(max=system.settings.boundaries[i])
     return bounds
 
 def print_positions(system):

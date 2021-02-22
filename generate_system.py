@@ -28,7 +28,7 @@ class system():
             ValueError: [description]
         TODO: boundaries and sizes should have a common is_nested_list() flag.
         """
-        self.check_directions(self.settings.director, self.settings.direction_1, self.settings.direction_2)
+        self.check_directions(self.settings.director, self.settings.direction_1, self.settings.direction_2, self.settings.direction_angle)
 
         if self.is_posint(self.settings.nb_chains_1):
             self.settings.nb_chains_1 = int(self.settings.nb_chains_1)
@@ -111,17 +111,17 @@ class system():
 
     def evaluate_bounds(self):
         if self.settings.boundaries == "auto":
+            boundaries = {'x':0, 'y':0, 'z':0}
             max_ = 0
-            length_dir_1 = self.settings.spacing * self.settings.nb_chains_1
-            length_dir_2 = self.settings.spacing * self.settings.nb_chains_2
+            boundaries[self.settings.direction_1] = self.settings.spacing * self.settings.nb_chains_1
+            boundaries[self.settings.direction_2] = self.settings.spacing * self.settings.nb_chains_2
             for row in self.polymers:
                 for poly in row:
                     current_length = poly.get_length()
                     if current_length > max_:
                         max_ = current_length
-            self.settings.boundaries = [[0, length_dir_1],
-                                        [0, length_dir_2],
-                                        [0, max_]]
+            boundaries[self.settings.director] = max_
+            self.settings.boundaries = boundaries
 
     def update_system_ids(self):
         cnt = 1
@@ -142,7 +142,7 @@ class system():
                     position[self.settings.director] = amplitude
                     poly.translate(position)
 
-    def check_directions(self, d0, d1, d2):
+    def check_directions(self, d0, d1, d2, da):
         coords = ["x","y","z"]
         if d0 not in coords:
             raise Exception("director not x, y or z")
@@ -156,6 +156,11 @@ class system():
             raise Exception("direction_2 not x, y or z")
         elif d2 == d0 or d2 == d1:
             raise Exception("direction_2 needs to be different from director or direction_1")
+
+        if da not in coords:
+            raise Exception("direction_angle not x, y or z")
+        elif da == d0:
+            raise Exception("direction_angle needs to be different from director")
 
     def is_posint(self, value):
         try:

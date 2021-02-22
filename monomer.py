@@ -111,7 +111,7 @@ class monomer():
 
         for i, atom_type in enumerate(self.composition):
             position[self.settings.director] += (self.sin(atom_type) + last_length)/2
-            position[self.settings.direction_1] = self.cos(atom_type) / 2 * inv_cnt
+            position[self.settings.direction_angle] = self.cos(atom_type) / 2 * inv_cnt
             self.atoms.append( atom(i, atom_type, position, self.settings.sizes[atom_type]) )
             last_length = self.sin(atom_type)
             inv_cnt *= -1
@@ -133,7 +133,7 @@ class monomer():
 
     def evaluate_length(self):
         if self.config.length == "auto":
-            self.length = self.atoms[-1].z - self.atoms[0].z + self.last_length
+            self.length = self.atoms[-1].get_position()[self.settings.director] - self.atoms[0].get_position()[self.settings.director] + self.last_length
         else:
             try:
                 self.length = float(self.config.length)
@@ -178,3 +178,6 @@ class atom():
         for i,typing in enumerate(particles_type):
             if self.type == typing:
                 self.lammps_type = i+1
+
+    def get_position(self):
+        return {'x':self.x, 'y':self.y, 'z':self.z}

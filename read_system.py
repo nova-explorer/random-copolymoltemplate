@@ -91,6 +91,8 @@ class system_settings():
                 self.rot_amp = p
             elif s == "boundaries":
                 self.boundaries = p
+            elif s == "direction_angle":
+                self.direction_angle = p
             elif s == "sizes":
                 self.sizes = p
             elif s == "angles":
