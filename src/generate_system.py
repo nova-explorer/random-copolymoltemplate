@@ -11,6 +11,7 @@ class system():
         self.evaluate_bounds()
         self.update_system_ids()
         self.random_translation()
+        self.random_rotation()
 
     def evaluate_settings(self):
         """[summary]
@@ -141,6 +142,12 @@ class system():
                                         self.settings.trans_amp[1])
                     position[self.settings.director] = amplitude
                     poly.translate(position)
+
+    def random_rotation(self):
+        if self.settings.rotate:
+            for row in self.polymers:
+                for poly in row:
+                    poly.rotate(self.settings.rot_amp)
 
     def check_directions(self, d0, d1, d2, da):
         coords = ["x","y","z"]

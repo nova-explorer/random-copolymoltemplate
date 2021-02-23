@@ -6,7 +6,12 @@
 #        angles on auto
 #        negative minimum bounds
 #        fixed patterns (initiator/terminator)
-#        reticulation if necessary
+#        cross-linking if necessary
+#        review zigzag and zigzag placement on other particles
+#        zigzag on fragments
+#        rotation of whole chains
+#        rotation on other axis
+#        initialize_monomers is useless
 # Boolean accepted values: true, True, 1, yes, Yes
 #                          false, False, 0, no, No
 
@@ -14,13 +19,12 @@ director = z
 direction_1 = x
 direction_2 = y
 
-nb_chains_1 = 2
-nb_chains_2 = 2
-nb_monomers_per_chain = 10
+nb_chains_1 = 10
+nb_chains_2 = 10
+nb_monomers_per_chain = 8
 
 monomer1_composition = CH2[10] + ELL + CH2[10]
-monomer2_composition = CH2[10] + BNZ[3] + CH2[10]
-#monomer2_composition = CH2[10] + BNZ{d=1}[3] + CH2[10] 
+monomer2_composition = CH2[10] + BNZ{1}[3] + CH2[10] # needs to be odd
 
 monomer1_length = auto
 monomer2_length = auto
@@ -30,10 +34,10 @@ monomer2_probability = 0.5
 
 spacing_between_chains = 20
 
-translate_on_director = yes
+translate_on_director = no
 translation_amplitude = -50,50
 
-rotate_along_director = true
+rotate_along_director = yes
 rotation_amplitude = -180,180
 
 boundaries = auto
@@ -41,5 +45,5 @@ boundaries = auto
 
 direction_angle = x
 
-sizes = CH2,1.54 : ELL,17.50 : BNZ,3.66
+sizes = CH2,1.54 : ELL,17.50 : BNZ,3.85
 angles = CH2,109.4 : ELL,180 : BNZ,180

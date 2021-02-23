@@ -1,6 +1,7 @@
 import re
-from numpy import cos, sin, pi
+from numpy import cos, sin, pi, sqrt
 from numpy.random import choice
+from random import uniform
 DEG_TO_RAD = 2 * pi / 360
 
 class polymer():
@@ -27,6 +28,11 @@ class polymer():
     def translate(self, xyz):
         for i in self.monomers:
             i.translate(xyz)
+
+    def rotate(self, amplitude):
+        for i in self.monomers:
+            angle = uniform(amplitude[0], amplitude[1])
+            i.rotate(angle)
 
     def get_length(self):
         return sum([i.length for i in self.monomers])
@@ -87,42 +93,68 @@ class monomer():
         composition = [i.strip() for i in self.config.composition.split("+")]
         self.composition = []
         for i in composition:
-            unit = i
+            unit = re.search(r"(.*?)(?:\[|\{|$)", i)[1]
             repeat = 1
-            if '[' in i and ']' in i:
-                result = re.search(r"(.*)\[(.*)\]", i)
-                try:
-                    unit = result[1]
-                    repeat = int(result[2])
-                except:
-                    raise ValueError("repeat value is not an int")
-            self.composition.extend([unit]*repeat)
+            director = self.settings.director
 
-        types = self.settings.sizes.keys()
-        for i in self.composition:
-            if i not in types:
+            if unit not in self.settings.sizes.keys():
                 raise Exception("Type", i, "does not have a specified length")
+
+            if '[' in i and ']' in i: # do an error case for [ and not ] or inverse
+                repeat = re.search(r"\[(.*)\]", i)[1]
+                try:
+                    repeat = int(repeat)
+                except:
+                    raise ValueError("Repeat value in not an int")
+
+            if '{' in i and '}' in i:
+                director = re.search(r"\{(.*)\}", i)[1]
+                try:
+                    director = int(director)
+                except:
+                    raise ValueError("Director value in not an int")
+
+            if director == 1:
+                director = self.settings.direction_1
+            elif director == 2:
+                director = self.settings.direction_2
+            elif director != self.settings.director:
+                raise ValueError("Director for type", i, "needs to be 1 or 2")
+
+            atom = {'unit':unit, 'd0':director}
+            self.composition.extend([atom]*repeat)
 
     def create_atom_list(self, inv_cnt):
         self.atoms = []
         position = {'x':0, 'y':0, 'z':0}
         last_length = self.sin(self.composition[0])
         position[self.settings.director] -= last_length
+        frag_flag = 0
+        for atom_i in self.composition:
+            unit = atom_i['unit']
+            d0 = atom_i['d0']
 
-        for i, atom_type in enumerate(self.composition):
-            position[self.settings.director] += (self.sin(atom_type) + last_length)/2
-            position[self.settings.direction_angle] = self.cos(atom_type) / 2 * inv_cnt
-            self.atoms.append( atom(i, atom_type, position, self.settings.sizes[atom_type]) )
-            last_length = self.sin(atom_type)
+            if d0 != self.settings.director:
+                if not frag_flag:
+                    position[d0] = 0
+                    position[self.settings.director] += (self.sin(atom_i) + last_length)/2
+                    frag_flag = 1
+                else:
+                    position[d0] += (self.sin(atom_i) + last_length)/2
+            else:
+                frag_flag = 0
+                position[self.settings.direction_angle] = self.cos(atom_i)/2 * inv_cnt
+                position[self.settings.director] += (self.sin(atom_i) + last_length)/2
+            self.atoms.append(atom(unit, position))
+            last_length = self.sin(atom_i)
             inv_cnt *= -1
-
         self.last_length = last_length
 
-    def sin(self, atom_type):
-        return self.settings.sizes[atom_type] * sin(self.settings.angles[atom_type]/2*DEG_TO_RAD)
+    def sin(self, atom):
+        return self.settings.sizes[atom['unit']] * sin(self.settings.angles[atom['unit']]/2*DEG_TO_RAD)
 
-    def cos(self, atom_type):
-        return self.settings.sizes[atom_type] * cos(self.settings.angles[atom_type]/2*DEG_TO_RAD)
+    def cos(self, atom):
+        return self.settings.sizes[atom['unit']] * cos(self.settings.angles[atom['unit']]/2*DEG_TO_RAD)
 
     def get_inv_cnt(self):
         if len(self.composition) % 2: # if even number of atoms
@@ -153,23 +185,41 @@ class monomer():
         for i in self.atoms:
             i.translate(xyz)
 
+    def rotate(self, angle):
+        p0 = self.atoms[0].get_position()
+        p0[self.settings.direction_angle] -= self.cos(self.composition[0])/2
+
+        d1 = self.settings.direction_1
+        d2 = self.settings.direction_2
+
+        for i in range(len(self.atoms)):
+            if self.composition[i]['d0'] != self.settings.director:
+                p1 = self.atoms[i].get_position()
+                r = sqrt( (p1[d1]-p0[d1])**2 + (p1[d2]-p0[d2])**2 )
+                p1[d1] = p0[d1] + r * cos(angle*DEG_TO_RAD)
+                p1[d2] = p0[d2] + r * sin(angle*DEG_TO_RAD)
+                self.atoms[i].move(p1)
+
     def create_lammps_ids(self):
         for i in self.atoms:
             i.add_lammps_type(self.settings.sizes.keys())
 
 class atom():
-    def __init__(self, monomer_id, atom_type, xyz, size):
-        self.monomer_id = monomer_id
+    def __init__(self, atom_type, xyz):
         self.type = atom_type
         self.x = xyz['x']
         self.y = xyz['y']
         self.z = xyz['z']
-        self.size = size
 
     def translate(self, xyz):
         self.x += xyz['x']
         self.y += xyz['y']
         self.z += xyz['z']
+
+    def move(self, xyz):
+        self.x = xyz['x']
+        self.y = xyz['y']
+        self.z = xyz['z']
 
     def add_system_id(self, system_id):
         self.system_id = system_id

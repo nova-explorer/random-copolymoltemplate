@@ -19,7 +19,7 @@ def print_nb_atoms(system):
     for row in system.polymers:
         for poly in row:
             for mono in poly.monomers:
-                for atom in mono.atoms:
+                for _ in mono.atoms:
                     cnt += 1
     return str(cnt)+"\n"
 
