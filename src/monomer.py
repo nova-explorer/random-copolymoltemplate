@@ -5,25 +5,26 @@ from random import uniform
 DEG_TO_RAD = 2 * pi / 360
 
 class polymer():
-    def __init__(self, monomer_list, probabilities, nb_monomer, director):
+    def __init__(self, monomer_list, probabilities, nb_monomer, director, s_id):
         self.monomer_list = monomer_list
         self.probabilities = probabilities
         self.nb_monomer = nb_monomer
         self.director = director
-        self.create_polymer()
+        self.create_polymer(s_id)
 
-    def create_polymer(self):
+    def create_polymer(self, s_id):
         self.monomers = []
         position = {'x':0, 'y':0, 'z':0}
         inv_cnt = 1
 
         for _ in range(self.nb_monomer):
             current_monomer = choice(self.monomer_list, replace=False, p=self.probabilities)
-            current_monomer = monomer(current_monomer.config, current_monomer.settings, inv_cnt)
+            current_monomer = monomer(current_monomer.config, current_monomer.settings, inv_cnt, s_id)
             current_monomer.translate(position)
             self.monomers.append(current_monomer)
             position[self.director] += current_monomer.length
             inv_cnt = inv_cnt * current_monomer.get_inv_cnt()
+            s_id += current_monomer.get_cnt()
 
     def translate(self, xyz):
         for i in self.monomers:
@@ -37,8 +38,11 @@ class polymer():
     def get_length(self):
         return sum([i.length for i in self.monomers])
 
-    def add_system_id(self, system_id):
-        self.s_id = system_id
+    def get_cnt(self):
+        cnt = 0
+        for i in self.monomers:
+            cnt += i.get_cnt()
+        return cnt
 
 class monomer_settings():
     def __init__(self, monomer_id):
@@ -80,14 +84,15 @@ class monomer_settings():
         self.probability = probability
 
 class monomer():
-    def __init__(self, config, settings, inv_cnt):
+    def __init__(self, config, settings, inv_cnt, s_id):
         self.config = config
         self.settings = settings
         self.evaluate_composition()
-        self.create_atom_list(inv_cnt)
+        self.create_atom_list(inv_cnt, s_id)
         self.evaluate_length()
         self.evaluate_probability()
         self.create_lammps_ids()
+        self.add_bonds()
 
     def evaluate_composition(self):
         composition = [i.strip() for i in self.config.composition.split("+")]
@@ -124,7 +129,7 @@ class monomer():
             atom = {'unit':unit, 'd0':director}
             self.composition.extend([atom]*repeat)
 
-    def create_atom_list(self, inv_cnt):
+    def create_atom_list(self, inv_cnt, s_id):
         self.atoms = []
         position = {'x':0, 'y':0, 'z':0}
         last_length = self.sin(self.composition[0])
@@ -145,9 +150,10 @@ class monomer():
                 frag_flag = 0
                 position[self.settings.direction_angle] = self.cos(atom_i)/2 * inv_cnt
                 position[self.settings.director] += (self.sin(atom_i) + last_length)/2
-            self.atoms.append(atom(unit, position))
+            self.atoms.append(atom(s_id, unit, position))
             last_length = self.sin(atom_i)
             inv_cnt *= -1
+            s_id += 1
         self.last_length = last_length
 
     def sin(self, atom):
@@ -204,12 +210,34 @@ class monomer():
         for i in self.atoms:
             i.add_lammps_type(self.settings.sizes.keys())
 
+    def add_bonds(self):
+        director = self.settings.director
+        for i in range(len(self.atoms)-1):
+            current = self.composition[i]['d0']
+            previous = self.composition[i-1]['d0']
+            after = self.composition[i+1]['d0']
+
+            if current!=director and after!=director and previous==director:
+                for j in range(i, len(self.atoms)):
+                    if self.composition[j]['d0'] == director:
+                        self.atoms[i].add_bonds(self.atoms[j].id)
+                        break
+            if current!=director and after==director:
+                pass
+            else:
+                self.atoms[i].add_bonds(self.atoms[i+1].id)
+
+    def get_cnt(self):
+        return len(self.atoms)
+
 class atom():
-    def __init__(self, atom_type, xyz):
+    def __init__(self, s_id, atom_type, xyz):
+        self.id = s_id
         self.type = atom_type
         self.x = xyz['x']
         self.y = xyz['y']
         self.z = xyz['z']
+        self.bonds = []
 
     def translate(self, xyz):
         self.x += xyz['x']
@@ -221,13 +249,13 @@ class atom():
         self.y = xyz['y']
         self.z = xyz['z']
 
-    def add_system_id(self, system_id):
-        self.system_id = system_id
-
     def add_lammps_type(self, particles_type):
         for i,typing in enumerate(particles_type):
             if self.type == typing:
                 self.lammps_type = i+1
+
+    def add_bonds(self, bond):
+        self.bonds.append(bond)
 
     def get_position(self):
         return {'x':self.x, 'y':self.y, 'z':self.z}

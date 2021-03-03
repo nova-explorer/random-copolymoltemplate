@@ -9,7 +9,6 @@ class system():
         self.initialize_monomers()
         self.create_system()
         self.evaluate_bounds()
-        self.update_system_ids()
         self.random_translation()
         self.random_rotation()
 
@@ -90,7 +89,7 @@ class system():
     def initialize_monomers(self):
         self.monomers = []
         for i in self.settings.monomers:
-            self.monomers.append(monomer(i, self.settings, inv_cnt=1))
+            self.monomers.append(monomer(i, self.settings, inv_cnt=1, s_id=0))
         self.probabilities = [i.probability for i in self.monomers]
         if sum(self.probabilities) != 1:
             raise ValueError("Sum of probabilities is not equal to 1")
@@ -98,14 +97,16 @@ class system():
     def create_system(self):
         position = {'x':0, 'y':0, 'z':0}
         row_list = [] # along direction_1
+        cnt = 1
         for _ in range(self.settings.nb_chains_1):
             column_list = [] # along direction_2
             position[self.settings.direction_2] = 0
             for _ in range(self.settings.nb_chains_2):
-                current_polymer = polymer(self.monomers, self.probabilities, self.settings.nb_monomers, self.settings.director)
+                current_polymer = polymer(self.monomers, self.probabilities, self.settings.nb_monomers, self.settings.director, cnt)
                 current_polymer.translate(position)
                 column_list.append(current_polymer)
                 position[self.settings.direction_2] += self.settings.spacing
+                cnt += current_polymer.get_cnt()
             row_list.append(column_list)
             position[self.settings.direction_1] += self.settings.spacing
         self.polymers = row_list
@@ -124,15 +125,6 @@ class system():
             boundaries[self.settings.director] = max_
             self.settings.boundaries = boundaries
 
-    def update_system_ids(self):
-        cnt = 1
-        for row in self.polymers:
-            for poly in row:
-                for mono in poly.monomers:
-                    for atom in mono.atoms:
-                        atom.add_system_id(cnt)
-                        cnt += 1
-
     def random_translation(self):
         position = {'x':0, 'y':0, 'z':0}
         if self.settings.translate:
@@ -148,6 +140,14 @@ class system():
             for row in self.polymers:
                 for poly in row:
                     poly.rotate(self.settings.rot_amp)
+
+    def get_atom(self, atom_id):
+        for row in self.polymers:
+            for poly in row:
+                for mono in poly.monomers:
+                    for i in mono.atoms:
+                        if i.id == atom_id:
+                            return i
 
     def check_directions(self, d0, d1, d2, da):
         coords = ["x","y","z"]
@@ -240,7 +240,7 @@ class system():
 
     def is_dict_of_float(self, value):
         value = [[j.strip() for j in i.strip().split(",")] for i in value.split(":")]
-        if len(value) == 3 and sum([len(i)==2 for i in value]) and [self.is_float(i[1]) for i in value]:
+        if sum([len(i)==2 for i in value]) and [self.is_float(i[1]) for i in value]:
             flag = True
         else:
             flag = False

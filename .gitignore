@@ -137,3 +137,6 @@ test.py
 .vscode/
 # Local commit log
 .commit
+# local directories with confidential data
+lammps/
+mol_files/

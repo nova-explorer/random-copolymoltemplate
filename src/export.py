@@ -1,10 +1,117 @@
-def export_to_lt(system, template, filename):
-    return 0
+def export_to_lt(system, template, output_name):
+    header = get_header(template)
+    output = open(output_name, "w")
+    output.write(header)
+
+    output.write(get_atoms(system))
+    output.write("\n")
+
+    output.write("write('Data Bond List') {\n")
+    output.write(get_bonds(system))
+    output.write("}\n")
+
+    output.write("\n")
+
+    output.write('write_once("Data Boundary") {\n')
+    output.write(get_boundaries(system))
+    output.write("}\n")
+
+    output.close()
+
+def get_header(template):
+    with open(template, "rt") as file:
+        header = file.readlines()
+    return "".join(header)
+
+def get_atoms(system):
+    section = ""
+    base = "{name} = new {type} [{count}]\n"
+    for i in system.settings.sizes.keys():
+        section += base.format(name=i + 's',
+                               type=i,
+                               count=get_atom_count(system,i))
+    return section
+
+def get_bonds(system):
+    section = ""
+    base = "\t$bond:b{b_id}  $atom:{name1}[{cnt1}]/{type1} $atom:{name2}[{cnt2}]/{type2}\n"
+    bond_id = 0
+    for row in system.polymers:
+        for poly in row:
+            for mono in poly.monomers:
+                for i in range(len(mono.atoms)-1):
+                    atom1 = mono.atoms[i]
+                    for id_2 in atom1.bonds:
+                        atom2 = system.get_atom(id_2)
+                        section += base.format(b_id=bond_id,
+                                           name1=atom1.type+'s',
+                                           name2=atom2.type+'s',
+                                           type1=atom1.type,
+                                           type2=atom2.type,
+                                           cnt1=get_type_count(system, atom1),
+                                           cnt2=get_type_count(system, atom2))
+                        bond_id+=1
+    return section
+
+def get_boundaries(system):
+    section = ""
+    base = "\t0 {hi} {var}lo {var}hi\n"
+    bounds = system.settings.boundaries
+    for i in bounds:
+        section += base.format(hi=bounds[i],
+                               var=i)
+    return section
+
+def get_atom_count(system, atom_type):
+    cnt = 0
+    for row in system.polymers:
+        for poly in row:
+            for mono in poly.monomers:
+                for i in mono.atoms:
+                    if i.type == atom_type:
+                        cnt += 1
+    return str(cnt)
+
+def get_type_count(system, atom):
+    cnt = 0
+    for row in system.polymers:
+        for poly in row:
+            for mono in poly.monomers:
+                for i in range(len(mono.atoms)):
+                    current = mono.atoms[i]
+                    if current.id == atom.id:
+                        return cnt
+                    elif current.type == atom.type:
+                        cnt += 1
+    return cnt
+
 def export_to_xyz(system, filename):
-    return 0
+    output = open(filename, "w")
+    output.write(print_nb_atoms(system) + "\n")
+    section = ""
+    base = "{name}  {x} {y} {z}\n"
+    atoms = sort_atoms_by_type(system)
+    for i in atoms:
+        section += base.format(name=i.type,
+                               x=i.x,
+                               y=i.y,
+                               z=i.z)
+    output.write(section)
+
+def sort_atoms_by_type(system):
+    sorted_atoms = []
+    types = system.settings.sizes.keys()
+    for curr_type in types:
+        for row in system.polymers:
+            for poly in row:
+                for mono in poly.monomers:
+                    for atom in mono.atoms:
+                        if atom.type == curr_type:
+                            sorted_atoms.append(atom)
+    return sorted_atoms
 
 def export_to_dump(system, filename):
-    output = open(filename+".dump", "w")
+    output = open(filename, "w")
 
     output.write("ITEM: TIMESTEP\n0\n")
     output.write("ITEM: NUMBER OF ATOMS\n")
@@ -40,13 +147,13 @@ def print_positions(system):
             for mono in poly.monomers:
                 for atom in mono.atoms:
                     if atom.type == "ELL":
-                        positions += ellipsoid.format(id=atom.system_id,
+                        positions += ellipsoid.format(id=atom.id,
                                                 type=atom.lammps_type,
                                                 x=atom.x,
                                                 y=atom.y,
                                                 z=atom.z)
                     else:
-                        positions += bead.format(id=atom.system_id,
+                        positions += bead.format(id=atom.id,
                                                 type=atom.lammps_type,
                                                 x=atom.x,
                                                 y=atom.y,
