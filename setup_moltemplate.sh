@@ -8,6 +8,10 @@ SECONDS=0
 
 if [ -f input.txt ]; then
     python3 src/create_system.py
+    if [ $? != 0 ]; then
+        echo -e "${RED}Error: Python encountered an error."
+        exit 1
+    fi
 else
     echo -e "${RED}Error: input.txt cannot be found in ./${NC}"
     exit 1
@@ -16,6 +20,14 @@ fi
 if [ -f mol_files/system.lt ] && [ -f mol_files/system.xyz ]; then
     cd mol_files/
         moltemplate.sh -xyz system.xyz -atomstyle "atomid atomtype x y z molid ellipsoidflag density" system.lt
+        if [ $? != 0 ]; then
+            echo -e "${RED}Error: Moltemplate encountered an error."
+            exit 1
+        fi
+
+        NB_ELL=$(grep -E 'new longi \[[0-9\.]+\]' system.lt | grep -Eo '[0-9\.]+')
+        sed "s/.*ellipsoids/     $NB_ELL  ellipsoids/" system.data > temp &&
+            mv temp system.data
     cd ../
     mv mol_files/system.in.init lammps/
     mv mol_files/system.in.settings lammps/

@@ -7,12 +7,17 @@ NC='\033[0m'
 
 if [ -f input.txt ]; then
     python3 src/test_system.py
+    if [ $? != 0 ]; then
+        echo -e "${RED}Error: Python encountered an error."
+        exit 1
+    fi
 else
     echo -e "${RED}Error: input.txt cannot be found in ./${NC}"
     exit 1
 fi
 
-if [ -f test.dump ]; then
+
+if [ -f test.dump ] && ; then
     ovito test.dump
     rm test.dump
 else

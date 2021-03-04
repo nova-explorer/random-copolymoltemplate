@@ -85,6 +85,8 @@ class system():
             self.settings.angles = self.to_dict_of_float(self.settings.angles)
         else:
             raise ValueError("angles are not dictionnary")
+        if self.is_dict_of_list(self.settings.groups):
+            self.settings.groups = self.to_dict_of_lists(self.settings.groups)
 
     def initialize_monomers(self):
         self.monomers = []
@@ -251,4 +253,24 @@ class system():
         for i in value.split(":"):
             i = [j.strip() for j in i.split(",")]
             value_dict[i[0]] = float(i[1])
+        return value_dict
+
+    def is_dict_of_list(self, value):
+        """Check if the types exist
+
+        Args:
+            value ([type]): [description]
+        """
+        value = [[j.strip() for j in i.strip().split(",")] for i in value.split(":")]
+        if sum([len(i)<1 for i in value]):
+            flag = False
+        else:
+            flag = True
+        return flag
+
+    def to_dict_of_lists(self, value):
+        value_dict = {}
+        for i in value.split(":"):
+            i = [j.strip() for j in i.split(",")]
+            value_dict[i[0]] = i[1::]
         return value_dict

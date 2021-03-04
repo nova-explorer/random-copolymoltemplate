@@ -11,6 +11,7 @@ class polymer():
         self.nb_monomer = nb_monomer
         self.director = director
         self.create_polymer(s_id)
+        self.add_monomer_bonds()
 
     def create_polymer(self, s_id):
         self.monomers = []
@@ -25,6 +26,12 @@ class polymer():
             position[self.director] += current_monomer.length
             inv_cnt = inv_cnt * current_monomer.get_inv_cnt()
             s_id += current_monomer.get_cnt()
+
+    def add_monomer_bonds(self):
+        for i in range(len(self.monomers)-1):
+            atom1 = self.monomers[i].atoms[-1]
+            atom2 = self.monomers[i+1].atoms[0]
+            atom1.add_bonds(atom2.id)
 
     def translate(self, xyz):
         for i in self.monomers:

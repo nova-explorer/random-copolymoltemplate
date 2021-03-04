@@ -26,31 +26,36 @@ def get_header(template):
 def get_atoms(system):
     section = ""
     base = "{name} = new {type} [{count}]\n"
-    for i in system.settings.sizes.keys():
-        section += base.format(name=i + 's',
-                               type=i,
-                               count=get_atom_count(system,i))
+    for i in system.settings.groups:
+        if get_group_count(system,i) != '0':
+            section += base.format(name=i+'s',
+                                type=i,
+                                count=get_group_count(system,i))
     return section
 
 def get_bonds(system):
     section = ""
     base = "\t$bond:b{b_id}  $atom:{name1}[{cnt1}]/{type1} $atom:{name2}[{cnt2}]/{type2}\n"
     bond_id = 0
+    atoms = []
     for row in system.polymers:
         for poly in row:
             for mono in poly.monomers:
-                for i in range(len(mono.atoms)-1):
-                    atom1 = mono.atoms[i]
-                    for id_2 in atom1.bonds:
-                        atom2 = system.get_atom(id_2)
-                        section += base.format(b_id=bond_id,
-                                           name1=atom1.type+'s',
-                                           name2=atom2.type+'s',
-                                           type1=atom1.type,
-                                           type2=atom2.type,
-                                           cnt1=get_type_count(system, atom1),
-                                           cnt2=get_type_count(system, atom2))
-                        bond_id+=1
+                for atom in mono.atoms:
+                    atoms.append(atom)
+
+    for i in range(len(atoms)-1):
+        atom1 = atoms[i]
+        for id_2 in atom1.bonds:
+            atom2 = system.get_atom(id_2)
+            section += base.format(b_id=bond_id,
+                                name1=get_group(system, atom1)+'s',
+                                name2=get_group(system, atom2)+'s',
+                                cnt1=get_group_position(system, atom1),
+                                cnt2=get_group_position(system, atom2),
+                                type1=atom1.type,
+                                type2=atom2.type)
+            bond_id+=1
     return section
 
 def get_boundaries(system):
@@ -62,15 +67,43 @@ def get_boundaries(system):
                                var=i)
     return section
 
-def get_atom_count(system, atom_type):
-    cnt = 0
+def get_group_count(system, group):
+    group_cnt = []
+    for atom_type in system.settings.groups[group]:
+        cnt = 0
+        for row in system.polymers:
+            for poly in row:
+                for mono in poly.monomers:
+                    for i in mono.atoms:
+                        if i.type == atom_type:
+                            cnt += 1
+        group_cnt.append(cnt)
+    return str(min(group_cnt))
+
+def get_group(system, atom):
+    for group in system.settings.groups:
+        for atom_type in system.settings.groups[group]:
+            if atom_type == atom.type:
+                return group
+
+def get_group_position(system,atom):
+    atoms = []
     for row in system.polymers:
         for poly in row:
             for mono in poly.monomers:
                 for i in mono.atoms:
-                    if i.type == atom_type:
-                        cnt += 1
-    return str(cnt)
+                    atoms.append(i)
+    group = get_group(system,atom)
+    lenght = len(system.settings.groups[group])
+    cnt = 0
+    group_cnt = 0
+    for i in atoms[0:atom.id-1]:
+        if get_group(system, i) == group:
+            cnt += 1
+        if cnt >= lenght:
+            group_cnt += 1
+            cnt = 0
+    return group_cnt
 
 def get_type_count(system, atom):
     cnt = 0
@@ -90,7 +123,7 @@ def export_to_xyz(system, filename):
     output.write(print_nb_atoms(system) + "\n")
     section = ""
     base = "{name}  {x} {y} {z}\n"
-    atoms = sort_atoms_by_type(system)
+    atoms = sort_atom_by_group(system)
     for i in atoms:
         section += base.format(name=i.type,
                                x=i.x,
@@ -107,6 +140,17 @@ def sort_atoms_by_type(system):
                 for mono in poly.monomers:
                     for atom in mono.atoms:
                         if atom.type == curr_type:
+                            sorted_atoms.append(atom)
+    return sorted_atoms
+
+def sort_atom_by_group(system):
+    sorted_atoms = []
+    for group in system.settings.groups:
+        for row in system.polymers:
+            for poly in row:
+                for mono in poly.monomers:
+                    for atom in mono.atoms:
+                        if get_group(system, atom) == group:
                             sorted_atoms.append(atom)
     return sorted_atoms
 

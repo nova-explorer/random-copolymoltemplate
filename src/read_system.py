@@ -162,6 +162,8 @@ class system_settings():
                 self.sizes = p
             elif s == "angles":
                 self.angles = p
+            elif s == "groups":
+                self.groups = p
             elif s.startswith("monomer"):
                 self.add_monomer_property(s,p)
             else:

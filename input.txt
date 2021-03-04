@@ -19,11 +19,11 @@ director = z
 direction_1 = x
 direction_2 = y
 
-nb_chains_1 = 1
-nb_chains_2 = 1
-nb_monomers_per_chain = 2
+nb_chains_1 = 5
+nb_chains_2 = 5
+nb_monomers_per_chain = 8
 
-monomer1_composition = CH2[10] + PS + ELL + PS + CH2[10]
+monomer1_composition = CH2[10] + PS1 + EL + PS2 + CH2[10]
 monomer2_composition = CH2[10] + PA{1} + PB{1} + PC{1} + CH2[10] # needs to be odd
 
 monomer1_length = auto
@@ -45,6 +45,6 @@ boundaries = auto
 
 direction_angle = x
 
-sizes = CH2,1.54 : ELL,17.50 : BNZ,3.85 : PS,0
-angles = CH2,109.4 : ELL,180 : BNZ,180 : PS,180
-groups = longi,PS,ELL : lat,PA,PB,PC
+sizes = CH2,1.54 : EL,17.50 : PA,3.85 : PB,3.85 : PC,3.85 : PS1,0 : PS2,0
+angles = CH2,109.4 : EL,180 : PA,180, : PB,180 : PC,180 : PS1,180 : PS2,180
+groups = longi,PS1,EL,PS2 : lat,PA,PB,PC : chain,CH2
