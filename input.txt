@@ -1,20 +1,3 @@
-# ignore
-# TODO : end of line
-#        ellipsoidal shapes
-#        random rotation
-#        direction_1, _2 and _angle on auto
-#        angles on auto
-#        negative minimum bounds
-#        fixed patterns (initiator/terminator)
-#        cross-linking if necessary
-#        review zigzag and zigzag placement on other particles
-#        zigzag on fragments
-#        rotation of whole chains
-#        rotation on other axis
-#        initialize_monomers is useless
-# Boolean accepted values: true, True, 1, yes, Yes
-#                          false, False, 0, no, No
-
 director = z
 direction_1 = x
 direction_2 = y
@@ -34,7 +17,7 @@ monomer2_probability = 0.5
 
 spacing_between_chains = 20
 
-translate_on_director = no
+translate_on_director = yes
 translation_amplitude = -50,50
 
 rotate_along_director = yes

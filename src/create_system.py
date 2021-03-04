@@ -12,6 +12,8 @@ Requires scripts: read_system.py
                   export.py
 
 TODO: *Current structure has a high propensity to create copy by reference issues.
+      *initialize_monomers is useless
+      *Increase verbosity and better error messages
 """
 from read_system import system_settings
 from generate_system import system
