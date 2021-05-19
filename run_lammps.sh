@@ -7,7 +7,7 @@ NC='\033[0m'
 SECONDS=0
 
 cd lammps/
-    lmp -in run.in.nvt
+    mpirun -np 6 /home/explorer/source_codes/lammps/src/lmp_mpi -in run.in.nvt
 cd ..
 
-echo -e "${GREEN}Finished script in $SECONDS s${NC}"
+echo -e "${GREEN}Finished script in $SECONDS s${NC}"s/

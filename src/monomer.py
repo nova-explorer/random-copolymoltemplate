@@ -155,7 +155,8 @@ class monomer():
                     position[d0] += (self.sin(atom_i) + last_length)/2
             else:
                 frag_flag = 0
-                position[self.settings.direction_angle] = self.cos(atom_i)/2 * inv_cnt
+                if unit != "EL":
+                    position[self.settings.direction_angle] = self.cos(atom_i)/2 * inv_cnt
                 position[self.settings.director] += (self.sin(atom_i) + last_length)/2
             self.atoms.append(atom(s_id, unit, position))
             last_length = self.sin(atom_i)
