@@ -44,8 +44,10 @@ class system_settings():
         Args:
             input_file (string): Path to the input file.
         """
+        print("Reading input file ...")
         file_content = self.read_settings(input_file)
         self.generate_settings(file_content)
+        print("Input file read!")
 
     def read_settings(self, input_file):
         """Read lines from the input file, removes comments and formats the lines with settings

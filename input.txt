@@ -7,7 +7,7 @@ nb_chains_2 = 5
 nb_monomers_per_chain = 8
 
 monomer1_composition = CH2[10] + PS1 + EL + PS2 + CH2[10]
-monomer2_composition = CH2[10] + PA{1} + PB{1} + PC{1} + CH2[10] # needs to be odd
+monomer2_composition = CH2[10] + PA{1} + PB{1} + PC{1} + CH2[10]
 
 monomer1_length = auto
 monomer2_length = auto

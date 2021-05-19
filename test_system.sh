@@ -17,7 +17,7 @@ else
 fi
 
 
-if [ -f test.dump ] && ; then
+if [ -f test.dump ]; then
     ovito test.dump
     rm test.dump
 else

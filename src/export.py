@@ -1,17 +1,23 @@
 def export_to_lt(system, template, output_name):
+    print("Writing lt file ...")
+
+    print("Writing header ...")
     header = get_header(template)
     output = open(output_name, "w")
     output.write(header)
 
+    print("Writing groups ...")
     output.write(get_atoms(system))
     output.write("\n")
 
+    print("Writing bonds ...")
     output.write("write('Data Bond List') {\n")
     output.write(get_bonds(system))
     output.write("}\n")
 
     output.write("\n")
 
+    print("Writing boundaries ...")
     output.write('write_once("Data Boundary") {\n')
     output.write(get_boundaries(system))
     output.write("}\n")
@@ -44,7 +50,11 @@ def get_bonds(system):
                 for atom in mono.atoms:
                     atoms.append(atom)
 
+    print_str = "\r Writing bonds of atom [{cnt}/{total}]"
+    total = len(atoms)-1
+
     for i in range(len(atoms)-1):
+        print(print_str.format(cnt=adjust_len(i,total),total=total), end='\r')
         atom1 = atoms[i]
         for id_2 in atom1.bonds:
             atom2 = system.get_atom(id_2)
@@ -119,6 +129,7 @@ def get_type_count(system, atom):
     return cnt
 
 def export_to_xyz(system, filename):
+    print("Writing xyz file ...")
     output = open(filename, "w")
     output.write(print_nb_atoms(system) + "\n")
     section = ""
@@ -153,6 +164,13 @@ def sort_atom_by_group(system):
                         if get_group(system, atom) == group:
                             sorted_atoms.append(atom)
     return sorted_atoms
+
+def adjust_len(value, max_):
+    max_ = len(str(max_))
+    for i in range(max_):
+        new_val = " "*i+str(value)
+        if  len(new_val) == max_:
+            return new_val
 
 def export_to_dump(system, filename):
     output = open(filename, "w")
@@ -190,7 +208,7 @@ def print_positions(system):
         for poly in row:
             for mono in poly.monomers:
                 for atom in mono.atoms:
-                    if atom.type == "ELL":
+                    if atom.type == "EL":
                         positions += ellipsoid.format(id=atom.id,
                                                 type=atom.lammps_type,
                                                 x=atom.x,

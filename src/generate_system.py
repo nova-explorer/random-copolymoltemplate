@@ -4,10 +4,14 @@ from random import uniform
 
 class system():
     def __init__(self, settings):
+        print("Preparing system ...")
         self.settings = settings
         self.evaluate_settings()
         self.initialize_monomers()
+        print("Creating system ...")
         self.create_system()
+        print("System created!")
+        print("Applying finishing touches ...")
         self.evaluate_bounds()
         self.random_translation()
         self.random_rotation()
@@ -97,18 +101,31 @@ class system():
             raise ValueError("Sum of probabilities is not equal to 1")
 
     def create_system(self):
+        def adjust_len(value, max_):
+            max_ = len(str(max_))
+            for i in range(max_):
+                new_val = " "*i+str(value)
+                if  len(new_val) == max_:
+                    return new_val
+
         position = {'x':0, 'y':0, 'z':0}
         row_list = [] # along direction_1
         cnt = 1
+        print_str = "\r Making polymer [{cnt}/{total}]"
+        total = self.settings.nb_chains_1 * self.settings.nb_chains_2
+        chain_cnt = 1
         for _ in range(self.settings.nb_chains_1):
             column_list = [] # along direction_2
             position[self.settings.direction_2] = 0
             for _ in range(self.settings.nb_chains_2):
+                print(print_str.format(cnt=adjust_len(chain_cnt,total),total=total), end='\r')
+
                 current_polymer = polymer(self.monomers, self.probabilities, self.settings.nb_monomers, self.settings.director, cnt)
                 current_polymer.translate(position)
                 column_list.append(current_polymer)
                 position[self.settings.direction_2] += self.settings.spacing
                 cnt += current_polymer.get_cnt()
+                chain_cnt += 1
             row_list.append(column_list)
             position[self.settings.direction_1] += self.settings.spacing
         self.polymers = row_list
