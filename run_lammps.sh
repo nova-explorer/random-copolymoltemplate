@@ -10,4 +10,4 @@ cd lammps/
     mpirun -np 6 /home/explorer/source_codes/lammps/src/lmp_mpi -in run.in.nvt
 cd ..
 
-echo -e "${GREEN}Finished script in $SECONDS s${NC}"s/
+echo -e "${GREEN}Finished script in $SECONDS s${NC}"

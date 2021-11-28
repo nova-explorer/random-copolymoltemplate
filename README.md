@@ -5,7 +5,7 @@ r-cpm is a wrapper for Moltemplate that was designed to allow the user to create
 The script works by reading an input file in which the user defines every monomer they want in the system. Then script will create a moltemplate system.lt file specific to this system and an xyz format system.xyz file containing particle locations.
 
 ## Version
-0.1
+0.1.1
 
 ## Requirements
 - Python3 (tested on 3.9.2 64-bit)
@@ -67,9 +67,10 @@ All lengths are in Angstrom and all angles in degrees.
 - Rotation on other directions than just the plane orthogonal to the director
 - Allowing more directions than x, y and z in general
 - Heterogenous sizes
-- Read sizes and angles from forcefield
+- **Read sizes and angles from forcefield**
 - Different spacing in direction 1 and 2
-- Create polymers with random number of monomers
-- Add non-uniform random
-- A working example (with moltemplate files)
-- TODOs in the src/ files (these are a bit more technical)
+- **Create polymers with random number of monomers**
+- **Add non-uniform random**
+- **A working example (with moltemplate files)**
+- **TODOs in the src/ files (these are a bit more technical)**
+- Check for parallel computing

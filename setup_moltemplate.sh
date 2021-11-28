@@ -40,3 +40,4 @@ fi
 echo -e "${GREEN}Finished script in $SECONDS s${NC}"
 echo -e "${BLUE}"
 shuf -n 1 src/post.txt
+echo -e "${NC}"

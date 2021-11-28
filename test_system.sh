@@ -27,3 +27,4 @@ fi
 
 echo -e "${BLUE}"
 shuf -n 1 src/post.txt
+echo -e "${NC}"
